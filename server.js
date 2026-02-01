@@ -6,7 +6,18 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://alizarced-hue.github.io",
+      // 如果你的 Pages 用自定义域名，也加在这里
+    ],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static("."));
 
@@ -19,6 +30,7 @@ console.log("KEY loaded? =", !!process.env.MINIMAX_API_KEY);
 app.use(express.static("."));
 
 // 2) 后端代理：前端 -> /api/analyze -> MiniMax
+app.get("/health", (req, res) => res.json({ ok: true }));
 app.post("/api/analyze", async (req, res) => {
   try {
     const { holds, imageWidth, imageHeight, colorName } = req.body || {};
