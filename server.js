@@ -118,7 +118,7 @@ return res.json({ route });
 });
 
 // 3) 启动服务（关键：必须监听端口）
-const port = 3000;
-app.listen(port, "127.0.0.1", () => {
-  console.log(`Server running: http://localhost:${port}`);
+const port = process.env.PORT || 3000;
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server running on port ${port}`);
 });
