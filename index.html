@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>攀岩路线AI助手 - 初学者指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧控制面板 */
+        .sidebar {
+            width: 400px;
+            min-width: 400px;
+            background: rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h1 {
+            font-size: 1.3rem;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .sidebar > p {
+            color: #8892b0;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* 主内容区 */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部工具栏 */
+        .toolbar {
+            background: rgba(0,0,0,0.3);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-label {
+            color: #8892b0;
+            font-size: 0.85rem;
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .zoom-level {
+            color: #00d9ff;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .fit-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,217,255,0.3);
+            background: rgba(0,217,255,0.1);
+            color: #00d9ff;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .fit-btn:hover {
+            background: rgba(0,217,255,0.2);
+        }
+
+        /* 图片编辑区 */
+        .canvas-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: repeating-conic-gradient(#1a1a2e 0% 25%, #0d0d1a 0% 50%) 50% / 20px 20px;
+        }
+
+        .canvas-container {
+            display: inline-block;
+            padding: 40px;
+            min-width: 100%;
+            min-height: 100%;
+        }
+
+        .upload-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px dashed rgba(0,217,255,0.5);
+            border-radius: 16px;
+            padding: 60px 80px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0,217,255,0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #00d9ff;
+            background: rgba(0,217,255,0.1);
+        }
+
+        .upload-area.hidden { display: none; }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-area h3 {
+            color: #00d9ff;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p { color: #8892b0; }
+
+        #fileInput { display: none; }
+
+        #mainCanvas {
+            display: block;
+            cursor: crosshair;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        #mainCanvas.hidden { display: none; }
+
+        /* Section样式 */
+        .section-title {
+            color: #ccd6f6;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* 颜色选择 */
+        .color-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .color-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-btn:hover, .color-btn.selected {
+            transform: scale(1.15);
+            border-color: #fff;
+        }
+
+        .color-btn.green { background: #22c55e; }
+        .color-btn.red { background: #ef4444; }
+        .color-btn.pink { background: #ec4899; }
+        .color-btn.blue { background: #3b82f6; }
+        .color-btn.yellow { background: #eab308; }
+        .color-btn.purple { background: #a855f7; }
+        .color-btn.orange { background: #f97316; }
+        .color-btn.white { background: #ffffff; }
+
+        /* 流程步骤 */
+        .workflow-steps {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .workflow-steps h4 {
+            color: #00ff88;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            opacity: 0.5;
+        }
+
+        .workflow-step.active {
+            opacity: 1;
+            background: rgba(0,255,136,0.15);
+            border: 1px solid rgba(0,255,136,0.3);
+        }
+
+        .workflow-step.completed {
+            opacity: 0.8;
+        }
+
+        .workflow-step.completed .step-circle {
+            background: #22c55e;
+        }
+
+        .step-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .workflow-step.active .step-circle {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .step-text {
+            flex: 1;
+        }
+
+        .step-text strong {
+            display: block;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .step-text span {
+            font-size: 0.75rem;
+            color: #8892b0;
+        }
+
+        /* 初学者提示 */
+        .beginner-tip {
+            background: linear-gradient(135deg, rgba(234,179,8,0.2), rgba(249,115,22,0.2));
+            border: 1px solid rgba(234,179,8,0.4);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .beginner-tip h4 {
+            color: #fbbf24;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .beginner-tip p {
+            color: #ccd6f6;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        /* 岩点标记模式 */
+        .marking-mode {
+            background: rgba(0,217,255,0.1);
+            border: 1px solid rgba(0,217,255,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .marking-mode h4 {
+            color: #00d9ff;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .marking-mode p {
+            color: #a0aec0;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .hold-count {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        .hold-count .count {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .hold-count .label {
+            color: #8892b0;
+            font-size: 0.85rem;
+        }
+
+        /* 路线步骤列表 */
+        .steps-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .steps-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .steps-header h4 {
+            color: #00ff88;
+            font-size: 0.9rem;
+        }
+
+        .steps-count {
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .steps-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #00d9ff;
+        }
+
+        .step-item.start { border-left-color: #22c55e; }
+        .step-item.end { border-left-color: #ef4444; }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #1a1a2e;
+            flex-shrink: 0;
+        }
+
+        .step-item.start .step-num { background: #22c55e; }
+        .step-item.end .step-num { background: #ef4444; }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-info .action {
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .step-info .detail {
+            color: #8892b0;
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .empty-steps {
+            text-align: center;
+            color: #8892b0;
+            padding: 30px;
+            font-size: 0.9rem;
+        }
+
+        /* 按钮 */
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,217,255,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #ccd6f6;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: #fff;
+        }
+
+        .btn-guide {
+            background: rgba(0,255,136,0.2);
+            border: 1px solid rgba(0,255,136,0.4);
+            color: #00ff88;
+        }
+
+        .btn-guide:hover {
+            background: rgba(0,255,136,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 路线说明弹窗 */
+        .route-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26,26,46,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 30px;
+        }
+
+        .route-modal.active { display: flex; }
+
+        .route-modal-content {
+            background: linear-gradient(135deg, rgba(30,30,50,0.98), rgba(20,20,40,0.98));
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 1100px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .route-modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .route-modal-header h2 {
+            color: #00ff88;
+            font-size: 1.3rem;
+        }
+
+        .route-modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .route-modal-close:hover {
+            background: rgba(239,68,68,0.3);
+            color: #ef4444;
+        }
+
+        .route-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 25px;
+        }
+
+        .guide-steps-section h3 {
+            color: #00d9ff;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0,217,255,0.3);
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border-left: 3px solid #00d9ff;
+        }
+
+        .guide-step.start-step { border-left-color: #22c55e; }
+        .guide-step.end-step { border-left-color: #ef4444; }
+
+        .guide-step-num {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #1a1a2e;
+            flex-shrink: 0;
+        }
+
+        .guide-step.start-step .guide-step-num { background: #22c55e; }
+        .guide-step.end-step .guide-step-num { background: #ef4444; }
+
+        .guide-step-content h5 {
+            color: #fff;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .guide-step-content p {
+            color: #a0aec0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .guide-tips-section h3 {
+            color: #eab308;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(234,179,8,0.3);
+        }
+
+        .tips-box {
+            background: rgba(234,179,8,0.1);
+            border: 1px solid rgba(234,179,8,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .tips-box p {
+            color: #ccd6f6;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .stats-box {
+            background: rgba(0,217,255,0.1);
+            border: 1px solid rgba(0,217,255,0.3);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .stats-box h4 {
+            color: #00d9ff;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        .stat-item .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .stat-item .label {
+            font-size: 0.8rem;
+            color: #8892b0;
+            margin-top: 4px;
+        }
+
+        .route-modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .route-modal-footer .btn {
+            width: auto;
+            padding: 10px 25px;
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26,26,46,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active { display: flex; }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0,217,255,0.3);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            color: #00d9ff;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .loading-subtext {
+            color: #8892b0;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+            .route-modal-body { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">AI正在分析攀岩路线...</p>
+        <p class="loading-subtext" id="loadingSubtext">识别岩点位置，计算最佳攀爬顺序</p>
+    </div>
+
+    <!-- 路线说明弹窗 -->
+    <div class="route-modal" id="routeModal">
+        <div class="route-modal-content">
+            <div class="route-modal-header">
+                <h2>🧗 初学者攀爬指南</h2>
+                <button class="route-modal-close" id="closeRouteModal">×</button>
+            </div>
+            <div class="route-modal-body">
+                <div class="guide-steps-section">
+                    <h3>🪜 详细攀爬步骤</h3>
+                    <div id="guideSteps"></div>
+                </div>
+                <div class="guide-tips-section">
+                    <h3>💡 新手必读技巧</h3>
+                    <div class="tips-box">
+                        <p id="guideTips"></p>
+                    </div>
+                    <div class="stats-box">
+                        <h4>📊 路线统计</h4>
+                        <div class="stats-grid" id="guideStats"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="route-modal-footer">
+                <button class="btn btn-download" id="downloadBtnModal">📥 下载标注图片</button>
+                <button class="btn btn-secondary" id="closeRouteModalBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- 左侧控制面板 -->
+        <div class="sidebar">
+            <h1>🧗 攀岩路线AI助手</h1>
+            <p>专为初学者设计 - AI帮你规划攀爬路线</p>
+
+            <!-- 初学者提示 -->
+            <div class="beginner-tip">
+                <h4>💡 新手须知</h4>
+                <p>不知道怎么爬？没关系！只需要标记出你想爬的路线上的所有岩点，AI会自动帮你规划攀爬顺序，告诉你每一步该怎么做。</p>
+            </div>
+
+            <!-- 操作流程 -->
+            <div class="workflow-steps">
+                <h4>📋 三步完成</h4>
+                <div class="workflow-step active" id="step1">
+                    <div class="step-circle">1</div>
+                    <div class="step-text">
+                        <strong>上传图片</strong>
+                        <span>拍摄或上传岩壁照片</span>
+                    </div>
+                </div>
+                <div class="workflow-step" id="step2">
+                    <div class="step-circle">2</div>
+                    <div class="step-text">
+                        <strong>点击标记岩点</strong>
+                        <span>点击图片上该颜色的所有岩点</span>
+                    </div>
+                </div>
+                <div class="workflow-step" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-text">
+                        <strong>AI生成攀爬指南</strong>
+                        <span>获取详细的攀爬步骤和技巧</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 颜色选择 -->
+            <div class="section-title">🎨 选择路线颜色（你想爬哪条线？）</div>
+            <div class="color-options">
+                <button class="color-btn green selected" data-color="green" title="绿色"></button>
+                <button class="color-btn red" data-color="red" title="红色"></button>
+                <button class="color-btn pink" data-color="pink" title="粉色"></button>
+                <button class="color-btn blue" data-color="blue" title="蓝色"></button>
+                <button class="color-btn yellow" data-color="yellow" title="黄色"></button>
+                <button class="color-btn purple" data-color="purple" title="紫色"></button>
+                <button class="color-btn orange" data-color="orange" title="橙色"></button>
+                <button class="color-btn white" data-color="white" title="白色"></button>
+            </div>
+
+            <!-- 岩点标记 -->
+            <div class="marking-mode" id="markingPanel" style="display: none;">
+                <h4>📍 标记岩点</h4>
+                <p>点击图片上<strong>所有该颜色</strong>的岩点。不用管顺序，AI会帮你计算最佳攀爬路线！</p>
+                <div class="hold-count">
+                    <span class="count" id="holdCount">0</span>
+                    <span class="label">个岩点已标记<br><small>建议标记6-15个岩点</small></span>
+                </div>
+            </div>
+
+            <!-- 路线预览 -->
+            <div class="steps-panel" id="stepsPanel" style="display: none;">
+                <div class="steps-header">
+                    <h4>🗺️ AI规划的攀爬路线</h4>
+                    <span class="steps-count" id="stepsCount">0 步</span>
+                </div>
+                <div class="steps-list" id="stepsList">
+                    <div class="empty-steps">标记岩点后，AI将为你生成攀爬路线</div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <button class="btn btn-primary" id="analyzeBtn" style="display: none;">
+                🤖 AI分析并生成攀爬指南
+            </button>
+            <button class="btn btn-download" id="downloadBtn" style="display: none;">
+                📥 下载标注图片
+            </button>
+            <button class="btn btn-guide" id="viewGuideBtn" style="display: none;">
+                📋 查看攀爬指南
+            </button>
+            <button class="btn btn-secondary" id="clearHoldsBtn" style="display: none;">
+                🔄 清除所有标记重新开始
+            </button>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-area">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">缩放:</span>
+                    <button class="zoom-btn" id="zoomOut">−</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="zoom-btn" id="zoomIn">+</button>
+                </div>
+                <button class="fit-btn" id="fitBtn">适应窗口</button>
+                <button class="fit-btn" id="actualBtn">原始大小</button>
+            </div>
+
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <h3>上传岩壁图片</h3>
+                    <p>拍摄攀岩墙的照片，点击或拖拽上传</p>
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+                <div class="canvas-container" id="canvasContainer">
+                    <canvas id="mainCanvas" class="hidden"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 状态
+        const state = {
+            selectedColor: 'green',
+            holds: [], // 用户标记的岩点 {x, y}
+            route: [], // AI生成的攀爬路线 {x, y, action, description, technique}
+            image: null,
+            imageLoaded: false,
+            zoom: 1,
+            originalWidth: 0,
+            originalHeight: 0,
+            exportData: null,
+            phase: 'upload' // 'upload' | 'marking' | 'complete'
+        };
+        
+        const AI_API_CONFIG = {
+            baseURL: "https://api.minimax.io/v1",
+            apiKey: "sk-api-7PAYYO4EqTsSMU10AUiQcW2K43gnyAIyL0OIRkWzFa5Gm2H_CpN6Ls95x65NT2-3odud8PzRuCazzXiia8XGGRjsNGMbg5OpSk7PLi3snopCq6ZqGo7nv5g",   // 🔴 这里换成你的 Key
+            model: "MiniMax-M2.1"             
+        };
+        
+        async function callAIForRoute(holds, imageWidth, imageHeight, colorName) {
+            const res = await fetch("/api/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                holds,
+                imageWidth,
+                imageHeight,
+                colorName
+                })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`API /api/analyze failed: ${res.status} ${text}`);
+            }
+
+            const data = await res.json();
+            return data.route;
+        }
+
+
+
+        const colorMap = {
+            green: '#22c55e', red: '#ef4444', pink: '#ec4899', blue: '#3b82f6',
+            yellow: '#eab308', purple: '#a855f7', orange: '#f97316', white: '#ffffff'
+        };
+
+        const colorNames = {
+            green: '绿色', red: '红色', pink: '粉色', blue: '蓝色',
+            yellow: '黄色', purple: '紫色', orange: '橙色', white: '白色'
+        };
+
+        // DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function init() {
+            // 上传
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#00d9ff'; });
+            uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'rgba(0,217,255,0.5)'; });
+            uploadArea.addEventListener('drop', e => {
+                e.preventDefault();
+                if (e.dataTransfer.files[0]?.type.startsWith('image/')) loadImage(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', e => { if (e.target.files[0]) loadImage(e.target.files[0]); });
+
+            // 颜色
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    state.selectedColor = btn.dataset.color;
+                    redrawCanvas();
+                });
+            });
+
+            // Canvas点击
+            canvas.addEventListener('click', handleCanvasClick);
+
+            // 缩放
+            document.getElementById('zoomIn').addEventListener('click', () => setZoom(state.zoom + 0.25));
+            document.getElementById('zoomOut').addEventListener('click', () => setZoom(state.zoom - 0.25));
+            document.getElementById('fitBtn').addEventListener('click', fitToWindow);
+            document.getElementById('actualBtn').addEventListener('click', () => setZoom(1));
+            canvasWrapper.addEventListener('wheel', e => {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    setZoom(state.zoom + (e.deltaY > 0 ? -0.1 : 0.1));
+                }
+            });
+
+            // 按钮
+            document.getElementById('analyzeBtn').addEventListener('click', analyzeRoute);
+            document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+            document.getElementById('downloadBtnModal').addEventListener('click', downloadImage);
+            document.getElementById('viewGuideBtn').addEventListener('click', () => document.getElementById('routeModal').classList.add('active'));
+            document.getElementById('clearHoldsBtn').addEventListener('click', clearHolds);
+            document.getElementById('closeRouteModal').addEventListener('click', () => document.getElementById('routeModal').classList.remove('active'));
+            document.getElementById('closeRouteModalBtn').addEventListener('click', () => document.getElementById('routeModal').classList.remove('active'));
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    state.image = img;
+                    state.imageLoaded = true;
+                    state.originalWidth = img.width;
+                    state.originalHeight = img.height;
+                    uploadArea.classList.add('hidden');
+                    canvas.classList.remove('hidden');
+
+                    // 更新状态
+                    state.phase = 'marking';
+                    updateWorkflowUI();
+
+                    fitToWindow();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateWorkflowUI() {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+
+            step1.classList.remove('active', 'completed');
+            step2.classList.remove('active', 'completed');
+            step3.classList.remove('active', 'completed');
+
+            if (state.phase === 'upload') {
+                step1.classList.add('active');
+            } else if (state.phase === 'marking') {
+                step1.classList.add('completed');
+                step2.classList.add('active');
+                document.getElementById('markingPanel').style.display = 'block';
+                document.getElementById('stepsPanel').style.display = 'block';
+                document.getElementById('clearHoldsBtn').style.display = 'block';
+            } else if (state.phase === 'complete') {
+                step1.classList.add('completed');
+                step2.classList.add('completed');
+                step3.classList.add('completed');
+            }
+
+            updateHoldCount();
+        }
+
+        function setZoom(newZoom) {
+            state.zoom = Math.max(0.25, Math.min(4, newZoom));
+            document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+            canvas.width = state.originalWidth * state.zoom;
+            canvas.height = state.originalHeight * state.zoom;
+            redrawCanvas();
+        }
+
+        function fitToWindow() {
+            if (!state.image) return;
+            const rect = canvasWrapper.getBoundingClientRect();
+            const scale = Math.min((rect.width - 80) / state.originalWidth, (rect.height - 80) / state.originalHeight, 1);
+            setZoom(scale);
+        }
+
+        function handleCanvasClick(e) {
+            if (!state.imageLoaded || state.phase !== 'marking') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / state.zoom;
+            const y = (e.clientY - rect.top) / state.zoom;
+
+            // 检查是否点击了已有的岩点（删除）
+            const existingIndex = state.holds.findIndex(h => {
+                const dist = Math.sqrt((h.x - x) ** 2 + (h.y - y) ** 2);
+                return dist < 25;
+            });
+
+            if (existingIndex >= 0) {
+                state.holds.splice(existingIndex, 1);
+            } else {
+                state.holds.push({ x, y });
+            }
+
+            updateHoldCount();
+            redrawCanvas();
+        }
+
+        function updateHoldCount() {
+            document.getElementById('holdCount').textContent = state.holds.length;
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (state.holds.length >= 3 && state.phase === 'marking') {
+                analyzeBtn.style.display = 'block';
+                analyzeBtn.disabled = false;
+            } else {
+                analyzeBtn.style.display = state.phase === 'marking' ? 'block' : 'none';
+                analyzeBtn.disabled = true;
+            }
+        }
+
+        function redrawCanvas() {
+            if (!state.image) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
+
+            const z = state.zoom;
+            const mainColor = colorMap[state.selectedColor];
+
+            if (state.phase === 'marking') {
+                // 画岩点标记（简单圆点）
+                state.holds.forEach((hold, index) => {
+                    ctx.beginPath();
+                    ctx.arc(hold.x * z, hold.y * z, 18 * z, 0, Math.PI * 2);
+                    ctx.fillStyle = mainColor;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3 * z;
+                    ctx.stroke();
+
+                    // 小数字
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${12 * z}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(String(index + 1), hold.x * z, hold.y * z);
+                });
+            } else if (state.phase === 'complete' && state.route.length > 0) {
+                // 画连接箭头
+                for (let i = 0; i < state.route.length - 1; i++) {
+                    drawArrowOnCanvas(
+                        state.route[i].x * z, state.route[i].y * z,
+                        state.route[i+1].x * z, state.route[i+1].y * z,
+                        mainColor
+                    );
+                }
+
+                // 画路线点
+                state.route.forEach((step, index) => {
+                    let color = mainColor;
+                    let label = String(index + 1);
+
+                    if (index === 0) { color = '#22c55e'; label = '起'; }
+                    else if (index === state.route.length - 1) { color = '#ef4444'; label = '终'; }
+                    else if (step.action.includes('脚')) { color = '#64748b'; }
+
+                    drawLabeledPointOnCanvas(step.x * z, step.y * z, color, label, step.action, 20 * z);
+                });
+            }
+        }
+
+        function drawArrowOnCanvas(x1, y1, x2, y2, color) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const angle = Math.atan2(dy, dx);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const shorten = 25 * state.zoom;
+
+            if (dist < shorten * 2) return;
+
+            const ratio = (dist - shorten) / dist;
+            const startX = x1 + dx * (shorten/dist), startY = y1 + dy * (shorten/dist);
+            const endX = x1 + dx * ratio, endY = y1 + dy * ratio;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3 * state.zoom;
+            ctx.stroke();
+
+            // 箭头
+            const arrowSize = 10 * state.zoom;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowSize*Math.cos(angle-Math.PI/6), endY - arrowSize*Math.sin(angle-Math.PI/6));
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowSize*Math.cos(angle+Math.PI/6), endY - arrowSize*Math.sin(angle+Math.PI/6));
+            ctx.stroke();
+        }
+
+        function drawLabeledPointOnCanvas(x, y, color, label, action, radius) {
+            // 外圈
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 3 * state.zoom, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3 * state.zoom;
+            ctx.stroke();
+
+            // 内圆
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 数字
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${radius * 0.8}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x, y);
+
+            // 动作标签
+            if (action && label !== '起' && label !== '终') {
+                ctx.font = `bold ${11 * state.zoom}px sans-serif`;
+                const textWidth = ctx.measureText(action).width;
+                const labelX = x + radius + 8 * state.zoom;
+
+                ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                ctx.beginPath();
+                ctx.roundRect(labelX - 4 * state.zoom, y - 9 * state.zoom, textWidth + 8 * state.zoom, 18 * state.zoom, 4 * state.zoom);
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'left';
+                ctx.fillText(action, labelX, y);
+            }
+        }
+
+        async function analyzeRoute() {
+            if (state.holds.length < 3) return;
+            
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            try {
+                const aiRoute = await callAIForRoute(
+                    state.holds,
+                    state.originalWidth,
+                    state.originalHeight,
+                    colorNames[state.selectedColor]
+                );
+
+                state.route = aiRoute;
+                state.phase = 'complete';
+
+                generateFinalImage();
+                generateGuide();
+                updateRouteList();
+
+                document.getElementById('analyzeBtn').style.display = 'none';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('viewGuideBtn').style.display = 'block';
+
+                updateWorkflowUI();
+                redrawCanvas();
+
+                document.getElementById('routeModal').classList.add('active');
+
+            } catch (err) {
+                alert("AI 分析失败，请检查 API Key 或网络");
+                console.error(err);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        }
+
+
+        // AI核心算法：计算最佳攀爬路线
+        function calculateClimbingRoute(holds) {
+            if (holds.length === 0) return [];
+
+            // 1. 按Y坐标排序（从下到上）
+            const sortedByY = [...holds].sort((a, b) => b.y - a.y);
+
+            // 2. 找到起点（最下面的2个点作为起步手点）
+            const startHolds = sortedByY.slice(0, Math.min(2, holds.length));
+
+            // 3. 找到终点（最上面的点）
+            const endHold = sortedByY[sortedByY.length - 1];
+
+            // 4. 贪心算法：从下往上，交替选择左右手/脚
+            const route = [];
+            const used = new Set();
+
+            // 起点
+            if (startHolds.length >= 2) {
+                const leftStart = startHolds[0].x < startHolds[1].x ? startHolds[0] : startHolds[1];
+                const rightStart = startHolds[0].x < startHolds[1].x ? startHolds[1] : startHolds[0];
+
+                route.push({ ...leftStart, action: '左手起步', isStart: true });
+                route.push({ ...rightStart, action: '右手起步', isStart: true });
+                used.add(JSON.stringify(leftStart));
+                used.add(JSON.stringify(rightStart));
+            } else {
+                route.push({ ...startHolds[0], action: '双手起步', isStart: true });
+                used.add(JSON.stringify(startHolds[0]));
+            }
+
+            // 中间路线：贪心选择最近的未使用岩点
+            let lastPos = {
+                x: (startHolds[0].x + (startHolds[1]?.x || startHolds[0].x)) / 2,
+                y: startHolds[0].y
+            };
+
+            // 交替使用手脚
+            const actionSequence = ['左脚', '右手', '右脚', '左手'];
+            let actionIndex = 0;
+
+            // 按高度分层处理
+            const remainingHolds = holds.filter(h => !used.has(JSON.stringify(h)));
+            const layers = [];
+
+            // 把剩余岩点分成若干层
+            const layerHeight = (startHolds[0].y - endHold.y) / Math.max(4, Math.ceil(remainingHolds.length / 2));
+
+            remainingHolds.forEach(hold => {
+                const layerIndex = Math.floor((startHolds[0].y - hold.y) / layerHeight);
+                if (!layers[layerIndex]) layers[layerIndex] = [];
+                layers[layerIndex].push(hold);
+            });
+
+            // 逐层处理
+            layers.forEach((layer, layerIdx) => {
+                if (!layer) return;
+
+                // 按X排序
+                layer.sort((a, b) => a.x - b.x);
+
+                layer.forEach(hold => {
+                    if (used.has(JSON.stringify(hold))) return;
+
+                    const action = actionSequence[actionIndex % actionSequence.length];
+
+                    // 根据位置调整动作
+                    let finalAction = action;
+                    const centerX = state.originalWidth / 2;
+
+                    if (action.includes('手')) {
+                        if (hold.x < centerX - 50) finalAction = '左手';
+                        else if (hold.x > centerX + 50) finalAction = '右手';
+                    } else {
+                        if (hold.x < centerX - 30) finalAction = '左脚';
+                        else if (hold.x > centerX + 30) finalAction = '右脚';
+                    }
+
+                    route.push({ ...hold, action: finalAction });
+                    used.add(JSON.stringify(hold));
+                    actionIndex++;
+                });
+            });
+
+            // 终点
+            if (!used.has(JSON.stringify(endHold))) {
+                route.push({ ...endHold, action: '完成攀登', isEnd: true });
+            } else {
+                route[route.length - 1].isEnd = true;
+                route[route.length - 1].action = '完成攀登';
+            }
+
+            // 为每个步骤生成详细说明
+            route.forEach((step, index) => {
+                step.description = generateStepDescription(step, index, route);
+                step.technique = generateTechnique(step, index, route);
+            });
+
+            return route;
+        }
+
+        function generateStepDescription(step, index, route) {
+            if (step.isStart) {
+                return '双手找到起点岩点，身体贴近岩壁，重心放低，准备开始攀爬。';
+            }
+            if (step.isEnd) {
+                return '最后冲刺！双手抓稳顶点，保持3秒确认完成。恭喜你完成攀登！';
+            }
+
+            const prevStep = route[index - 1];
+            if (!prevStep) return step.action;
+
+            const dx = step.x - prevStep.x;
+            const dy = step.y - prevStep.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            let desc = '';
+
+            if (step.action.includes('手')) {
+                desc = step.action + '向';
+                if (dy < -50) desc += '上方';
+                if (dx > 30) desc += '右侧';
+                else if (dx < -30) desc += '左侧';
+                desc += '移动抓握。';
+
+                if (distance > 100) {
+                    desc += '跨度较大，需要先移动重心。';
+                }
+            } else {
+                desc = step.action + '踩踏';
+                if (dy < -30) desc += '上方';
+                if (dx > 20) desc += '右侧';
+                else if (dx < -20) desc += '左侧';
+                desc += '岩点。';
+
+                desc += '用脚尖内侧精准踩点，踩稳后再转移重心。';
+            }
+
+            return desc;
+        }
+
+        function generateTechnique(step, index, route) {
+            if (step.isStart) {
+                return '三点固定原则：移动一个肢体时，保持其他三个肢体稳定。';
+            }
+            if (step.isEnd) {
+                return '最后一步可以适当动态发力，但要确保抓稳。';
+            }
+
+            const tips = [];
+
+            if (step.action.includes('手')) {
+                tips.push('根据岩点形状选择抓握方式：指洞用指尖抠、平台用掌心包、侧拉用指节勾');
+            } else {
+                tips.push('脚踩稳后再移动重心，避免打滑');
+            }
+
+            const prevStep = route[index - 1];
+            if (prevStep) {
+                const dy = step.y - prevStep.y;
+                if (dy < -80) {
+                    tips.push('向上移动时多用腿部发力，手臂主要保持平衡');
+                }
+            }
+
+            return tips.join('。') + '。';
+        }
+
+        function updateRouteList() {
+            const container = document.getElementById('stepsList');
+            document.getElementById('stepsCount').textContent = `${state.route.length} 步`;
+
+            if (state.route.length === 0) {
+                container.innerHTML = '<div class="empty-steps">AI将为你生成攀爬路线</div>';
+                return;
+            }
+
+            let html = '';
+            state.route.forEach((step, index) => {
+                const isStart = step.isStart;
+                const isEnd = step.isEnd;
+                const stepClass = isStart ? 'start' : (isEnd ? 'end' : '');
+
+                html += `
+                    <div class="step-item ${stepClass}">
+                        <div class="step-num">${index + 1}</div>
+                        <div class="step-info">
+                            <div class="action">${step.action}</div>
+                            <div class="detail">${step.description.slice(0, 30)}...</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function generateFinalImage() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = state.originalWidth;
+            exportCanvas.height = state.originalHeight;
+            const exportCtx = exportCanvas.getContext('2d');
+            exportCtx.drawImage(state.image, 0, 0);
+
+            const mainColor = colorMap[state.selectedColor];
+
+            // 画箭头
+            for (let i = 0; i < state.route.length - 1; i++) {
+                drawArrowExport(exportCtx, state.route[i].x, state.route[i].y, state.route[i+1].x, state.route[i+1].y, mainColor);
+            }
+
+            // 画点和标签
+            state.route.forEach((step, index) => {
+                let color = mainColor;
+                let label = `${index + 1}. ${step.action}`;
+
+                if (step.isStart) { color = '#22c55e'; label = '起步'; }
+                else if (step.isEnd) { color = '#ef4444'; label = '终点'; }
+                else if (step.action.includes('脚')) { color = '#64748b'; }
+
+                drawLabeledPointExport(exportCtx, step.x, step.y, color, label, 22);
+            });
+
+            state.exportData = exportCanvas.toDataURL('image/png');
+        }
+
+        function drawArrowExport(ctx, x1, y1, x2, y2, color) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const angle = Math.atan2(dy, dx);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const shorten = 28;
+
+            if (dist < shorten * 2) return;
+
+            const ratio = (dist - shorten) / dist;
+            const startX = x1 + dx * (shorten/dist), startY = y1 + dy * (shorten/dist);
+            const endX = x1 + dx * ratio, endY = y1 + dy * ratio;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - 12*Math.cos(angle-Math.PI/6), endY - 12*Math.sin(angle-Math.PI/6));
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - 12*Math.cos(angle+Math.PI/6), endY - 12*Math.sin(angle+Math.PI/6));
+            ctx.stroke();
+        }
+
+        function drawLabeledPointExport(ctx, x, y, color, label, radius) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.font = 'bold 13px sans-serif';
+            const textWidth = ctx.measureText(label).width;
+            const labelX = x + radius + 6;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.beginPath();
+            ctx.roundRect(labelX - 4, y - 10, textWidth + 8, 20, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, labelX, y);
+        }
+
+        function generateGuide() {
+            let html = '';
+
+            state.route.forEach((step, index) => {
+                const isStart = step.isStart;
+                const isEnd = step.isEnd;
+                const stepClass = isStart ? 'start-step' : (isEnd ? 'end-step' : '');
+
+                html += `
+                    <div class="guide-step ${stepClass}">
+                        <div class="guide-step-num">${index + 1}</div>
+                        <div class="guide-step-content">
+                            <h5>第${index + 1}步：${step.action}</h5>
+                            <p><strong>动作：</strong>${step.description}</p>
+                            <p style="color: #fbbf24; margin-top: 6px;"><strong>💡 技巧：</strong>${step.technique}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('guideSteps').innerHTML = html;
+
+            // 统计
+            const handSteps = state.route.filter(s => s.action.includes('手')).length;
+            const footSteps = state.route.filter(s => s.action.includes('脚')).length;
+
+            document.getElementById('guideStats').innerHTML = `
+                <div class="stat-item">
+                    <div class="value">${state.route.length}</div>
+                    <div class="label">总步数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value" style="color: ${colorMap[state.selectedColor]}">${colorNames[state.selectedColor]}</div>
+                    <div class="label">路线颜色</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value">${handSteps}</div>
+                    <div class="label">手部动作</div>
+                </div>
+                <div class="stat-item">
+                    <div class="value">${footSteps}</div>
+                    <div class="label">脚部动作</div>
+                </div>
+            `;
+
+            // 技巧
+            const tips = [
+                '• <strong>攀爬前先观察</strong>：在脑中预演整条路线，想象每一步的动作',
+                '• <strong>三点固定原则</strong>：移动一个肢体时，其他三个保持稳定抓握或踩踏',
+                '• <strong>多用腿部发力</strong>：腿部力量是手臂的3-4倍，尽量用腿推动身体向上',
+                '• <strong>身体贴近岩壁</strong>：重心靠近岩壁可以减少手臂负担',
+                '• <strong>呼吸均匀</strong>：发力时呼气，不要憋气',
+                '• <strong>放松手臂</strong>：在稳定位置时让手臂自然下垂，恢复肌肉'
+            ];
+
+            if (state.route.length > 8) {
+                tips.push('• <strong>路线较长</strong>：在稳定点位适当休息，调整呼吸');
+            }
+
+            document.getElementById('guideTips').innerHTML = tips.join('<br><br>');
+        }
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = `攀岩路线-${colorNames[state.selectedColor]}-${Date.now()}.png`;
+            link.href = state.exportData;
+            link.click();
+        }
+
+        function clearHolds() {
+            state.holds = [];
+            state.route = [];
+            state.phase = 'marking';
+
+            document.getElementById('analyzeBtn').style.display = 'block';
+            document.getElementById('downloadBtn').style.display = 'none';
+            document.getElementById('viewGuideBtn').style.display = 'none';
+
+            updateWorkflowUI();
+            updateHoldCount();
+            redrawCanvas();
+
+            document.getElementById('stepsList').innerHTML = '<div class="empty-steps">标记岩点后，AI将为你生成攀爬路线</div>';
+            document.getElementById('stepsCount').textContent = '0 步';
+        }
+
+        init();
+    </script>
+</body>
+</html>
